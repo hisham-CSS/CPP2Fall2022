@@ -6,12 +6,18 @@ using UnityEngine.InputSystem;
 
 public class GameManager : Singelton<GameManager>
 {
-    Player playerInput;
+    [HideInInspector]
+    public Player playerInput;
+
+    MouseLook playerLook;
+    MouseLook cameraLook;
+
     PlayerController controller;
     protected override void Awake()
     {
         base.Awake();
         playerInput = new Player();
+        
     }
     // Start is called before the first frame update
     void Start()
@@ -55,16 +61,22 @@ public class GameManager : Singelton<GameManager>
     void AddPlayerInput()
     {
         controller = GameObject.FindGameObjectWithTag("Player").GetComponent<PlayerController>();
+        cameraLook = Camera.main.GetComponent<MouseLook>();
+        playerLook = GameObject.FindGameObjectWithTag("Player").GetComponent<MouseLook>();
 
-        if (controller == null)
+
+        if (controller == null || cameraLook == null || playerLook == null)
         {
             return;
         }
 
+
         playerInput.Actions.Move.performed += ctx => controller.MovePlayer(ctx);
         playerInput.Actions.Move.canceled += ctx => controller.MovePlayer(ctx);
-        playerInput.Actions.Look.performed += ctx => controller.Look(ctx);
         playerInput.Actions.Fire.performed += ctx => controller.Fire(ctx);
+
+        playerInput.Actions.Look.performed += ctx => cameraLook.Look(ctx);
+        playerInput.Actions.Look.performed += ctx => playerLook.Look(ctx);
     }
 
     public void EndGame()
