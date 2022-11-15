@@ -67,6 +67,7 @@ public class GameManager : Singelton<GameManager>
 
         if (controller == null || cameraLook == null || playerLook == null)
         {
+
             return;
         }
 

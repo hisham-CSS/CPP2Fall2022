@@ -8,7 +8,6 @@ public class PlayerController : MonoBehaviour
 {
     Animator anim;
 
-    public Camera playerCamera;
     public Transform projectileSpawn;
     public Rigidbody projectilePrefab;
     public float projectileForce = 10.0f;
@@ -17,7 +16,28 @@ public class PlayerController : MonoBehaviour
     public float gravity = 9.81f;
     public float jumpSpeed = 10.0f;
 
+    bool godModeActive = false;
+    public float godModeTimer = 3.0f;
+
+    public int health
+    {
+        get => _health;
+        set
+        {
+            if (godModeActive)
+                return;
+
+            _health = value;
+
+            //if (health <= 0)
+                //call game over
+        }
+    }
+
+    int _health;
+
     CharacterController controller;
+    WeaponPickup wp;
 
     Vector3 curMoveInput;
     Vector2 move;
@@ -31,6 +51,7 @@ public class PlayerController : MonoBehaviour
             controller.minMoveDistance = 0.0f;
 
             anim = GetComponentInChildren<Animator>();
+            wp = GetComponent<WeaponPickup>();
 
             if (!anim)
             {
@@ -72,7 +93,6 @@ public class PlayerController : MonoBehaviour
     }
 
     public void MovePlayer(InputAction.CallbackContext context)
-
     {
         //Debug.Log("Move vector is: " + context.action.ReadValue<Vector2>());
         move = context.action.ReadValue<Vector2>();
@@ -93,13 +113,35 @@ public class PlayerController : MonoBehaviour
     {
         if (context.action.WasPressedThisFrame())
         {
-            if (projectilePrefab && projectileSpawn)
+            if (projectilePrefab && wp.weaponFirePoint && GetComponent<WeaponPickup>().weapon != null)
             {
-                Rigidbody temp = Instantiate(projectilePrefab, projectileSpawn.position, projectileSpawn.rotation);
-                temp.AddForce(projectileSpawn.forward * projectileForce, ForceMode.Impulse);
+                Rigidbody temp = Instantiate(projectilePrefab, wp.weaponFirePoint.transform.position, wp.weaponFirePoint.transform.rotation);
+                temp.AddForce(wp.weaponFirePoint.transform.forward * projectileForce, ForceMode.Impulse);
 
                 Destroy(temp.gameObject, 2.0f);
             }
         }
+    }
+
+    IEnumerator StopGodMode()
+    {
+        yield return new WaitForSeconds(godModeTimer);
+
+        godModeActive = false;
+    }
+
+    private void OnControllerColliderHit(ControllerColliderHit hit)
+    {
+        if (hit.gameObject.CompareTag("GodMode"))
+        {
+            if (!godModeActive)
+            {
+                godModeActive = true;
+                StartCoroutine(StopGodMode());
+            }
+
+            Destroy(hit.gameObject);
+        }
+            
     }
 }
